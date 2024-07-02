@@ -4,17 +4,19 @@ import { StyleSheet, View, FlatList, ImageBackground, Image, Pressable } from 'r
 import { showMessage } from 'react-native-flash-message'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { getDetail } from '../../api/RestaurantEndpoints'
-import { remove } from '../../api/ProductEndpoints'
+import { highlight, remove } from '../../api/ProductEndpoints'
 import ImageCard from '../../components/ImageCard'
 import TextRegular from '../../components/TextRegular'
 import TextSemiBold from '../../components/TextSemibold'
 import * as GlobalStyles from '../../styles/GlobalStyles'
 import DeleteModal from '../../components/DeleteModal'
+import HighlightModal from '../../components/HighlightModal'
 import defaultProductImage from '../../../assets/product.jpeg'
 
 export default function RestaurantDetailScreen ({ navigation, route }) {
   const [restaurant, setRestaurant] = useState({})
   const [productToBeDeleted, setProductToBeDeleted] = useState(null)
+  const [productToBeHighlighted, setProductToBeHighlighted] = useState(null)
 
   useEffect(() => {
     fetchRestaurantDetail()
@@ -65,6 +67,36 @@ export default function RestaurantDetailScreen ({ navigation, route }) {
         {!item.availability &&
           <TextRegular textStyle={styles.availability }>Not available</TextRegular>
         }
+        {/* SOLUCION */}
+        <View style={[{ flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', bottom: 40 }]}>
+        {item.isHighlight &&
+              <TextRegular textStyle={[styles.badge, { color: GlobalStyles.brandGreen, borderColor: GlobalStyles.brandSuccess }]}>
+                ¡Favourite ON!
+              </TextRegular>
+          }
+        {!item.isHighlight &&
+              <TextRegular textStyle={[styles.badge, { color: GlobalStyles.brandPrimary, borderColor: GlobalStyles.brandPrimary }]}>
+                ¡Favourite OFF!
+              </TextRegular>
+          }
+         <Pressable
+            onPress={() => { setProductToBeHighlighted(item) }}
+              style={() => [
+                {
+                  backgroundColor: item.isHighlight ? GlobalStyles.yellow : GlobalStyles.white,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 4,
+                  borderWidth: item.isHighlight ? 4 : 0, // tamaño de relleno. Se rellena sólo si el producto está destacado.
+                  height: 40,
+                  width: 50
+                }
+              ]}>
+              <MaterialCommunityIcons name='star' color={'black'} size={20}
+              />
+          </Pressable>
+        </View>
+        {/* SOLUCION */}
          <View style={styles.actionButtonsContainer}>
           <Pressable
             onPress={() => navigation.navigate('EditProductScreen', { id: item.id })
@@ -102,6 +134,25 @@ export default function RestaurantDetailScreen ({ navigation, route }) {
             </TextRegular>
           </View>
         </Pressable>
+        {/* SOLUCION */}
+        <Pressable
+            onPress={() => { setProductToBeHighlighted(item) }}
+            style={({ pressed }) => [
+              {
+                backgroundColor: pressed
+                  ? GlobalStyles.brandGreenTap
+                  : GlobalStyles.brandGreen
+              },
+              styles.actionButton
+            ]}>
+          <View style={[{ flex: 1, flexDirection: 'row', justifyContent: 'center' }]}>
+            <MaterialCommunityIcons name='star' color={'white'} size={20}/>
+            <TextRegular textStyle={styles.text}>
+              Highlight product
+            </TextRegular>
+          </View>
+        </Pressable>
+        {/* SOLUCION */}
         </View>
       </ImageCard>
     )
@@ -151,6 +202,29 @@ export default function RestaurantDetailScreen ({ navigation, route }) {
       })
     }
   }
+  // SOLUCION
+  const highlightProduct = async (product) => {
+    try {
+      await highlight(product.id)
+      await fetchRestaurantDetail()
+      setProductToBeHighlighted(null)
+      showMessage({
+        message: `Product ${product.name} succesfully highlighted`,
+        type: 'success',
+        style: GlobalStyles.flashStyle,
+        titleStyle: GlobalStyles.flashTextStyle
+      })
+    } catch (error) {
+      console.log(error)
+      setProductToBeHighlighted(null)
+      showMessage({
+        message: `Product ${product.name} could not be highlighted.`,
+        type: 'error',
+        style: GlobalStyles.flashStyle,
+        titleStyle: GlobalStyles.flashTextStyle
+      })
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -168,6 +242,11 @@ export default function RestaurantDetailScreen ({ navigation, route }) {
         onConfirm={() => removeProduct(productToBeDeleted)}>
           <TextRegular>If the product belong to some order, it cannot be deleted.</TextRegular>
       </DeleteModal>
+      <HighlightModal
+        isVisible={productToBeHighlighted !== null}
+        onCancel={() => setProductToBeHighlighted(null)}
+        onConfirm={() => highlightProduct(productToBeHighlighted)}>
+      </HighlightModal>
     </View>
   )
 }
@@ -243,6 +322,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     bottom: 5,
     position: 'absolute',
-    width: '90%'
+    width: '63%'
+  },
+  badge: {
+    textAlign: 'center',
+    borderWidth: 2,
+    width: 85,
+    paddingVertical: 0,
+    paddingHorizontal: 10,
+    borderRadius: 10
   }
 })

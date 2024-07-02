@@ -57,7 +57,13 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
         defaultValue: new Date()
+      },
+      // SOLUCION
+      isHighlight: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
       }
+
     })
   },
   down: async (queryInterface, Sequelize) => {

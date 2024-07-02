@@ -21,7 +21,7 @@ export default function EditProductScreen ({ navigation, route }) {
   const [backendErrors, setBackendErrors] = useState()
   const [product, setProduct] = useState({})
 
-  const [initialProductValues, setInitialProductValues] = useState({ name: null, description: null, price: null, order: null, productCategoryId: null, availability: null, image: null })
+  const [initialProductValues, setInitialProductValues] = useState({ name: null, description: null, price: null, order: null, productCategoryId: null, availability: null, image: null, isHighlight: false })
   const validationSchema = yup.object().shape({
     name: yup
       .string()
@@ -172,7 +172,18 @@ export default function EditProductScreen ({ navigation, route }) {
                 }
               />
               <ErrorMessage name={'availability'} render={msg => <TextError>{msg}</TextError> }/>
-
+              <TextRegular>Is it highlighted?</TextRegular>
+              <Switch
+                trackColor={{ false: GlobalStyles.brandSecondary, true: GlobalStyles.brandPrimary }}
+                thumbColor={values.isHighlight ? GlobalStyles.brandSecondary : '#f4f3f4'}
+                // onValueChange={toggleSwitch}
+                value={values.isHighlight}
+                style={styles.switch}
+                onValueChange={value =>
+                  setFieldValue('isHighlight', value)
+                }
+              />
+              <ErrorMessage name={'isHighlight'} render={msg => <TextError>{msg}</TextError> }/>
               <Pressable onPress={() =>
                 pickImage(
                   async result => {

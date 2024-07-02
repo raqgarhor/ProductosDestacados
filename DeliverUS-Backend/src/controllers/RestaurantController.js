@@ -46,7 +46,11 @@ const create = async function (req, res) {
     res.status(500).send(err)
   }
 }
-
+/*
+Nótese que el orden de apariencia de los productos destacados irá en función de la fecha de destaque de más reciente a
+ más antigua.
+*/
+// SOLUCION
 const show = async function (req, res) {
   // Only returns PUBLIC information of restaurants
   try {
@@ -61,7 +65,8 @@ const show = async function (req, res) {
         model: RestaurantCategory,
         as: 'restaurantCategory'
       }],
-      order: [[{ model: Product, as: 'products' }, 'order', 'ASC']]
+      // SOLUCION
+      order: [[{ model: Product, as: 'products' }, 'isHighlight', 'DESC'], [{ model: Product, as: 'products' }, 'createdAt', 'DESC']]
     }
     )
     res.json(restaurant)

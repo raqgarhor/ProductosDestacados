@@ -1,4 +1,4 @@
-import { Product, Order, Restaurant, RestaurantCategory, ProductCategory } from '../models/models.js'
+import { Product, Order, Restaurant, RestaurantCategory, ProductCategory, sequelizeSession } from '../models/models.js'
 import Sequelize from 'sequelize'
 
 const indexRestaurant = async function (req, res) {
@@ -107,12 +107,44 @@ const popular = async function (req, res) {
   }
 }
 
+// SOLUCION
+/*
+ Si el propietario pulsa el botón para destacar un nuevo producto y ya existían cinco productos destacados del mismo restaurante,
+  se procederá a destacar el producto indicado y se marcará como "no destacado" el producto más antiguo que fue destacado con
+   anterioridad.
+*/
+const highlight = async function (req, res) {
+  const t = await sequelizeSession.transaction()
+  try {
+    const totalHighlited = await Product.count({ where: { isHighlight: true } })
+
+    if (totalHighlited >= 5) {
+      const firstHighlighted = await Product.findOne({ where: { isHighlight: true }, order: [['createdAt'], ['DESC']] })
+      await Product.update(
+        { isHighlight: false },
+        { where: { id: firstHighlighted.id }, transaction: t }
+      )
+    }
+
+    await Product.update(
+      { isHighlight: true },
+      { where: { id: req.params.productId }, transaction: t }
+    )
+    await t.commit()
+    res.status(200).send('Product highlighted successfully')
+  } catch (err) {
+    await t.rollback()
+    res.status(500).send(err)
+  }
+}
+
 const ProductController = {
   indexRestaurant,
   show,
   create,
   update,
   destroy,
-  popular
+  popular,
+  highlight
 }
 export default ProductController
